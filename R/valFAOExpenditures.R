@@ -9,6 +9,7 @@
 #' @author David M Chen
 #' @importFrom rlang %>%
 #' @importFrom readxl read_xlsx
+#' @importFrom ggrepel geom_text_repel
 
 valFAOExpenditures <- function(plot = TRUE){
 
@@ -45,11 +46,11 @@ for (i in getNames(FAOp)){
 
 #then fill with global FAOini price
 #
-# pinit <- calcOutput("IniFoodPrice", aggregate = FALSE, datasource = "FAO")
-# attr <- calcOutput("Attributes", aggregate = FALSE)
-# pinit <- pinit/attr[,,"wm"][,,getItems(pinit, dim = 3)] %>%
-#   collapseNames()
-load("C:/PIK/ICPdata/pinitWM.Rda")
+pinit <- calcOutput("IniFoodPrice", aggregate = FALSE, datasource = "FAO")
+attr <- calcOutput("Attributes", aggregate = FALSE)
+pinit <- pinit/attr[,,"wm"][,,getItems(pinit, dim = 3)] %>%
+  collapseNames()
+#load("C:/PIK/ICPdata/pinitWM.Rda")
 
 #pinit <- pinit * 1.23 # inflate
 
@@ -80,8 +81,8 @@ magCoefs <- kBH  %>%
 
 
 #
-# gdppc <- calcOutput("GDPpc", aggregate = F)
-load("C:/PIK/ICPdata/gdppcppp.Rda")
+gdppcppp <- calcOutput("GDPpc", aggregate = F)
+#load("C:/PIK/ICPdata/gdppcppp.Rda")
 
 gdppc <- time_interpolate(gdppcppp[,,"gdppc_SSP2"], interpolated_year = c(2010:2030),
                           integrate_interpolated_year = TRUE) %>%
@@ -173,8 +174,6 @@ magExpMeanKvalid <- magExpMeanK %>%
 magExpMeanKvalid[c(3:ncol(magExpMeanKvalid))] <- round(magExpMeanKvalid[c(3:ncol(magExpMeanKvalid))], digits = 3)
 
 #write.csv(magExpMeanKvalid, file="noweightReg_GDPconv.csv")
-
-
 
 yi4 <-  read_xlsx(system.file("extdata",mapping="YiSourceFig4.xlsx",
                                     package = "mrmarkup"), skip = 1) %>%

@@ -2,6 +2,7 @@
 #' @description read gets FAO food expenditures
 #' @import tidyr dplyr mrcommons
 #' @importFrom magpiesets findset
+#' @importFrom magclass as.data.frame
 #' @export
 #'
 #' @return dataframe of FAO FBS
@@ -30,7 +31,7 @@ expLECagg <- mbind(expLECagg, expLECagg_proc)
 
 # what to do with Fruit others mapping still
 
-expLEC <- as.data.frame(expLECagg, rev = 2)  %>%
+expLEC <- magclass::as.data.frame(expLECagg, rev = 2)  %>%
   rename("value" = .value,
          "iso3c" = Area,
          "year" = Year)  %>%

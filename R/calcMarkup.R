@@ -2,6 +2,7 @@
 #' @description calculate markups
 #' @param plot plot markups
 #' @import dplyr tidyr
+#' @importFrom magclass as.data.frame
 #' @export
 #'
 #' @return dataframe of ICP expenditures
@@ -31,16 +32,16 @@ consW <- readFBSnew(level = "LEM")
 
 ### split expenditures AH and AFH ###
 
-# pop <- calcOutput("Population", aggregate = F)[,,"pop_SSP2"]
-load("C:/PIK/pop.Rda")
+pop <- calcOutput("Population", aggregate = F)[,,"pop_SSP2"]
+#load("C:/PIK/pop.Rda")
 pop <- time_interpolate(pop[,,"pop_SSP2"], interpolated_year <- c(2010:2020), integrate_interpolated_years = TRUE)
-pop <- as.data.frame(collapseNames(pop), rev = 2) %>%
+pop <- magclass::as.data.frame(collapseNames(pop), rev = 2) %>%
   rename("pop" = .value) %>%
   select(iso3c, year, pop)
 
 AFHpred <- regressFAFH(weight = TRUE, plot = TRUE, predict = "SSP2", threshold = 0.85, calibrate = TRUE)
 
-consW <- as.data.frame(consW, rev = 2) %>%
+consW <- magclass::as.data.frame(consW, rev = 2) %>%
   rename("iso3c" = Area, "BHName" = prod, "year" = Year, "Consumption(Mt)" = ".value") %>%
   mutate("Consumption(Mt)" = `Consumption(Mt)`/1e6) %>%
   inner_join(AFHpred) %>%

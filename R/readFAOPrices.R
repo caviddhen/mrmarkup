@@ -16,9 +16,9 @@ readFAOPrices <- function(fillPrices = T, level = "k") {
 
 FAOmap <- toolGetMapping("FAOitems_online.csv", type = "sectoral")
 
-#prpr <- readSource("FAO_online", "PricesProducerAnnual",
-#                   convert = TRUE)
-load("C:/PIK/ICPdata/prpr.Rda")
+prpr <- readSource("FAO_online", "PricesProducerAnnual",
+                   convert = TRUE)
+#load("C:/PIK/ICPdata/prpr.Rda")
 
 #prpr <- GDPuc::convertGDP(prpr, unit_in = "constant 2005 US$MER",
 #                         unit_out = "constant 2017 US$MER" )
@@ -26,10 +26,10 @@ prpr <-     prpr* 1.23  # convert with CPI
 
 
 #production weight from ProductionItem to FoodBalance Item
-#crop <- collapseNames(readSource("FAO_online", "Crop", convert = TRUE)[,,"production"])
-load("C:/PIK/ICPdata/crop.Rda")
-#live <- collapseNames(readSource("FAO_online", "LivePrim", convert = TRUE)[,,"production"])
-load("C:/PIK/ICPdata/live.Rda")
+crop <- collapseNames(readSource("FAO_online", "Crop", convert = TRUE)[,,"production"])
+#load("C:/PIK/ICPdata/crop.Rda")
+live <- collapseNames(readSource("FAO_online", "LivePrim", convert = TRUE)[,,"production"])
+#load("C:/PIK/ICPdata/live.Rda")
 weight <- mbind(crop, live)
 
 #make sure matching years and items
@@ -49,8 +49,8 @@ prpr_fbs <- toolAggregate(prpr, rel = FAOmap1, weight = weight,
 kmapping <- toolGetMapping("newFAOitems_online_DRAFT.csv", type = "sectoral")
 
 #consumption weight from FoodBalanceItem to Large Exp Grouping, but some values dropped, oilpalm gets dropped
-#hr <- calcOutput("FAOharmonized", aggregate = FALSE)
-load("C:/PIK/ICPdata/hr.Rda")
+hr <- calcOutput("FAOharmonized", aggregate = FALSE)
+#load("C:/PIK/ICPdata/hr.Rda")
 
 hr <- dimSums(hr[,,c("food", "processed")], dim = 3.2, na.rm = T)
 

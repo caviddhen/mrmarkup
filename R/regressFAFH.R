@@ -1,6 +1,7 @@
 #' @title regressFAFH
 #' @description calculate markups
 #' @import dplyr tidyr
+#' @importFrom magclass as.data.frame
 #' @export
 #' @param weight weighted by population regression
 #' @param plot plot the line
@@ -34,17 +35,18 @@ chn <-  data.frame("country" = "China", "kcal_shr" = 0.11, "year" = 2015 ) #Jian
 kcal_fafh <- rbind(kcal_fafh, ind, chn)
 kcal_fafh$iso3c <- toolCountry2isocode(kcal_fafh$country, mapping = c("The Netherlands" = "NLD"))
 
-#gdppcppp <- calcOutput("GDPpc", aggregate=F)
-gdppcppp <- readRDS("C:/PIK/ICPdata/gdppcppp.rds")
-gdppc_iso <- as.data.frame(collapseNames(gdppcppp[,,"gdppc_SSP2"]), rev = 2) %>%
+gdppcppp <- calcOutput("GDPpc", aggregate=F)
+#gdppcppp <- readRDS("C:/PIK/ICPdata/gdppcppp.rds")
+gdppc_iso <- magclass::as.data.frame(collapseNames(gdppcppp[,,"gdppc_SSP2"]), rev = 2) %>%
   rename("gdp" = .value) %>%
   select(iso3c, year, gdp) %>%
   mutate(year = as.numeric(as.character(year)))
 
 catShr <- inner_join(kcal_fafh, gdppc_iso)
 
-load("C:/PIK/ICPdata/pop_iso.Rda")
-pop_iso <- as.data.frame(pop_iso[,,"pop_SSP2"]) %>%
+pop_iso <- calcOutput("Population", aggregate = FALSE)
+#load("C:/PIK/ICPdata/pop_iso.Rda")
+pop_iso <- magclass::as.data.frame(pop_iso[,,"pop_SSP2"]) %>%
   rename("pop" = Value, "iso3c" = Region, "year" = Year) %>%
   select(iso3c, year, pop) %>%
   mutate(year = as.numeric(as.character(year)))
@@ -103,7 +105,7 @@ ggplot(catShr, aes(x=gdp, y = kcal_shr)) +
 
 gdppcppp <- time_interpolate(gdppcppp, interpolated_year <- c(2010:2020), integrate_interpolated_years = TRUE)
 
-gdpPred <- as.data.frame(collapseNames(gdppcppp[,,paste0("gdppc_", predict)]), rev = 2) %>%
+gdpPred <- magclass::as.data.frame(collapseNames(gdppcppp[,,paste0("gdppc_", predict)]), rev = 2) %>%
          rename("gdp" = .value) %>%
         select(iso3c, year, gdp) %>%
         mutate(year = as.numeric(as.character(year)))
@@ -115,7 +117,7 @@ if (calibrate) {
   for(i in catShr$iso3c){
   calib[which(calib$iso3c == i),"calib"] <-  catShr[which(catShr$iso3c == i),"kcal_shr"] -
                                                  catShr[which(catShr$iso3c == i),"predlm"]
-  gdpPred[which(gdpPred$iso3 == i), "pred"] <-  gdpPred[which(gdpPred$iso3 == i), "pred"] +
+  gdpPred[which(gdpPred$iso3c == i), "pred"] <-  gdpPred[which(gdpPred$iso3c == i), "pred"] +
                                                    calib[which(calib$iso3c == i),"calib"]
 }
 }

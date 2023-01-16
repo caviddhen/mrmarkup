@@ -5,6 +5,7 @@
 #' (important for weighting other functions)
 #' @import tidyr dplyr madrat
 #' @importFrom magpiesets findset
+#' @import mrland
 #' @export
 #'
 #' @return dataframe of FAO FBS
@@ -22,7 +23,7 @@ fb <-  read.csv(system.file("extdata",mapping="FAOSTAT_FB.csv",
   relocate(Element, .after = prod)  %>%
   mutate(Value = Value * 1000) # tons
 
- fb$Area <- toolCountry2isocode(fb$Area, mapping = c("T�rkiye" = "TUR",
+ fb$Area <- toolCountry2isocode(fb$Area, mapping = c("T�rkiye" = "TUR",
                                                      "Türkiye" = "TUR",
                                                      "Côte d'Ivoire" = "CIV"))
 
@@ -57,11 +58,11 @@ hrk <-  toolAggregate(collapseNames(hr1[,,"Food"]), rel = kmapping,
                       from = "newFoodBalanceItem",
                       to = "k_ICP", partrel = T, dim = 3)
 
-#proc_shr <- calcOutput("Processing_shares", aggregate = F)
-load("C:/PIK/ICPdata/proc_shr.Rda")
+proc_shr <- calcOutput("Processing_shares", aggregate = F)
+#load("C:/PIK/ICPdata/proc_shr.Rda")
 proc_shr <- time_interpolate(proc_shr[getRegions(hrk),,], interpolated_year = getYears(hrk), integrate_interpolated_years = T)[,getYears(hrk),]
-#cvn_fct <- calcOutput("Processing_conversion_factors", aggregate = F)
-load("C:/PIK/ICPdata/cvn_fct.Rda")
+cvn_fct <- calcOutput("Processing_conversion_factors", aggregate = F)
+#load("C:/PIK/ICPdata/cvn_fct.Rda")
 cvn_fct <- time_interpolate(cvn_fct, interpolated_year = getYears(hrk), integrate_interpolated_years = T)[,getYears(hrk),]
 
 food <- hrk[,,c(kli,intersect(kpr, getNames(hrk)))]
