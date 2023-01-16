@@ -34,8 +34,8 @@ chn <-  data.frame("country" = "China", "kcal_shr" = 0.11, "year" = 2015 ) #Jian
 kcal_fafh <- rbind(kcal_fafh, ind, chn)
 kcal_fafh$iso3c <- toolCountry2isocode(kcal_fafh$country, mapping = c("The Netherlands" = "NLD"))
 
-#gdppcmer <- calcOutput("GDPpc", aggregate=F)
-load("C:/PIK/ICPdata/gdppcppp.Rda")
+#gdppcppp <- calcOutput("GDPpc", aggregate=F)
+gdppcppp <- readRDS("C:/PIK/ICPdata/gdppcppp.rds")
 gdppc_iso <- as.data.frame(collapseNames(gdppcppp[,,"gdppc_SSP2"]), rev = 2) %>%
   rename("gdp" = .value) %>%
   select(iso3c, year, gdp) %>%

@@ -4,12 +4,15 @@
 \alias{readFBSnew}
 \title{readFBSnew}
 \usage{
-readFBSnew(level = "k")
+readFBSnew(level = "k", return = "FBS")
 }
 \arguments{
 \item{level}{k prim or LEM}
 }
 \value{
+either return the regular FBS, or the proc_sugar and proc_oil datasheets
+(important for weighting other functions)
+
 dataframe of FAO FBS
 }
 \description{

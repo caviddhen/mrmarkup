@@ -81,7 +81,7 @@ FAOmarkup3 <- inner_join(FAOmarkup2,rm_20th) %>%
   filter(!is.na(FAOmarkupNoCater_perT),!is.na(FAOmarkupwCater_perT))
 
 if(plot){
-ggplot(FAOmarkup3, aes(x=log(gdp,base=10), y = FAOmarkupNoCater_perT)) +
+ggplot(FAOmarkup3, aes(x=log(gdp, base=10), y = FAOmarkupNoCater_perT)) +
   geom_point(aes(size = pop))+
   #stat_smooth(method =  "lm") +
   facet_wrap(~BHName, scales = "free", nrow=2) +

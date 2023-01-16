@@ -4,7 +4,10 @@
 \alias{regressMarkups}
 \title{regressMarkups}
 \usage{
-regressMarkups()
+regressMarkups(plot = TRUE)
+}
+\arguments{
+\item{plot}{plot the regression lines}
 }
 \value{
 dataframe of ICP expenditures

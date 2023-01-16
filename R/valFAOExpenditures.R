@@ -2,11 +2,13 @@
 #' @description uses regression markups to calculate consumer price markups
 #' @import tidyr dplyr mrcommons
 #' @importFrom magpiesets findset
+#' @import madrat
 #' @export
 #'
 #' @return dataframe of FAO FBS
 #' @author David M Chen
 #' @importFrom rlang %>%
+#' @importFrom readxl read_xlsx
 
 valFAOExpenditures <- function(plot = TRUE){
 
@@ -174,7 +176,8 @@ magExpMeanKvalid[c(3:ncol(magExpMeanKvalid))] <- round(magExpMeanKvalid[c(3:ncol
 
 
 
-yi4 <- readxl::read_xlsx("C:/PIK/ICPdata/YiSourceFig4.xlsx", skip =1) %>%
+yi4 <-  read_xlsx(system.file("extdata",mapping="YiSourceFig4.xlsx",
+                                    package = "mrmarkup"), skip = 1) %>%
   pivot_longer(cols = c(2:last_col()), names_to = "year", values_to = "YifarmAHshr") %>%
   mutate(year = as.numeric(year)) %>%
   filter(!is.na(year)) %>%
@@ -195,8 +198,8 @@ ggplot(compyi4, aes(x = year, y = farmAHShr, colour = source)) +
   theme_bw(base_size = 20) +
   ggtitle("Farm Share of At Home Food Expenditures")
 
-
-yi3 <- readxl::read_xlsx("C:/PIK/ICPdata/YiSourceFig3.xlsx", skip = 4) %>%
+yi3 <-  read_xlsx(system.file("extdata",mapping="YiSourceFig3.xlsx",
+                              package = "mrmarkup"), skip = 4) %>%
   rename("year" = Year, "USDAfarmShrTot" = `Farm value share of expenditures`,
          "YifarmShrTot" = `New farm share series`,
   ) %>%

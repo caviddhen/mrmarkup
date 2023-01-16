@@ -4,6 +4,7 @@
 #' @param level k or prim
 #' @import tidyr dplyr mrcommons
 #' @importFrom magpiesets findset
+#' @import madrat
 #' @export
 #'
 #' @return dataframe of FAO expenditures

@@ -3,7 +3,7 @@
 #' @param level k prim or LEM
 #' @return either return the regular FBS, or the proc_sugar and proc_oil datasheets
 #' (important for weighting other functions)
-#' @import tidyr dplyr mrcommons
+#' @import tidyr dplyr madrat
 #' @importFrom magpiesets findset
 #' @export
 #'
