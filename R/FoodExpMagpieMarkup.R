@@ -59,7 +59,7 @@ consKmag <- readFBSnew(level = "prim")
 cons <- Kcal(gdx = gdx, level = "iso",
            calibrated = TRUE, after_shock = afterShock, 
            products = "kfo", product_aggr = FALSE,
-           per_capita = FALSE) * 365
+           per_capita = FALSE) * 365  # This is in MILLION KCAL! 
 
 cons <- collapseNames(cons)
 kfo <- c(findset("kfo"), "Vegetables")
@@ -75,8 +75,8 @@ cons[,,"others"] <- setYears(othShr[,2019,], NULL) * cons[,,"others"]
 
 attr <- add_columns(attr, addnm = "Vegetables", dim = 3.2)
 attr[,,"Vegetables"] <- attr[,,"others"]
-cons <- cons * attr[,,"wm"][,,getItems(cons, dim =3)] %>%
-  collapseNames()
+#cons <- cons * attr[,,"wm"][,,getItems(cons, dim =3)] %>%
+#  collapseNames()
 
 proc_shr <- calcOutput("Processing_shares", aggregate = F)
 proc_shr <- time_interpolate(proc_shr[getRegions(prpr),,], interpolated_year = getYears(prpr),
@@ -193,8 +193,9 @@ magExp <- inner_join(cons,
   inner_join(AFHshr) %>%      ### from kcal_fafh
   pivot_wider(names_from =  c(`Price Type`),
               values_from = Price) %>%
-  mutate(fahExp = foodD * (1-AFHshr) * (noCaterPrice),
-         fafhExp = foodD * AFHshr * (caterPrice),
+  mutate(foodD = foodD * 1e6, #convert to kcal from Mio. kcal
+         fahExp = foodD * (1-AFHshr) * (noCaterPrice),
+         fafhExp = foodD * AFHshr * (RcaterPrice),
          farmAHexp = foodD *(1-AFHshr) * prodPrice,
          farmAFHexp = foodD *AFHshr * prodPrice,
          farmAHshr = farmAHexp/fahExp,
