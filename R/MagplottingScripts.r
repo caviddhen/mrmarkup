@@ -1,3 +1,7 @@
+MagplottingScripts <- function(gdx){
+
+
+markups <- FoodExpMagpieMarkup(gdx = gdx)
 
 def2020 <- filter(markups,year == 2020) %>%
              dplyr::rename( "pr20" = "Price"  ) %>%
@@ -285,3 +289,4 @@ ggplot(filter(markups, iso3c == iso,
                      values = c( "#5AD2D8", "#995AD8"),
                      guide = guide_legend(reverse = TRUE) ) +
   theme_bw(base_size = 18)
+}

@@ -7,7 +7,6 @@
 #'
 #' @return dataframe of FAO FBS
 #' @author David M Chen
-#' @importFrom rlang %>%
 #' @importFrom readxl read_xlsx
 #' @importFrom ggrepel geom_text_repel
 

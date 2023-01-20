@@ -17,7 +17,9 @@ Depends:
     mrland,
     readxlsb,
     GDPuc,
-    magpie4
+    magpie4,
+    ggrepel,
+    readxl
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
