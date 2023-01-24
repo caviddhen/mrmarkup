@@ -1,7 +1,12 @@
 #' @title FoodExpMagpieMarkup
 #' @description calculate markups
-#' @param magclass TRUE for magclass object equivalent to magpie4 FoodExpenditure output
+#' @param level reg or regglo
+#' @param type "consumer" (marked up) or "producer" price output 
 #' @param gdx gdx file as input for mag base prices
+#' @param afterShock TRUE or FALSE for kcal consumed 
+#' @param povmodel TRUE outputs data in aggregated magclass format for poverty model
+#' @param prodAggr TRUE for aggregating across alll products
+#' @param validYi plot validation to Yi 2021
 #' @import dplyr tidyr
 #' @importFrom magclass as.data.frame
 #' @importFrom magpiesets findset
@@ -11,15 +16,14 @@
 #' @return dataframe or magclass object of consumer food expenditures
 #' @author David M Chen
 
-FoodExpMagpieMarkup <- function(gdx, level = "reg", afterShock = FALSE,
+FoodExpMagpieMarkup <- function(gdx, level = "reg", type = "consumer", prodAggr = TRUE, afterShock = FALSE,
                                 povmodel = FALSE, validYi = FALSE) {
-#gdx <- "/p/projects/landuse/users/davidch/magpie_versions/bilateral_trade/magpie/output/BilatPR6_OFF_T1_2022-12-21_00.03.07/fulldata.gdx"
-# a random gdx
+#gdx <-  "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/markupDefPov_2023-01-18_15.56.21/fulldata.gdx"
+
 # NOTE THIS ONE IS IN 2005 USDMER
 #now doing kcal and mag price per calorie so no need for wet matter
 
 kfo <- findset("kfo")
-#gdx <- "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/AccTestDefault_2023-01-17_14.42.57/fulldata.gdx"
 kBH <- read.csv(system.file("extdata",mapping="mapMAgPIELEM.csv",
                               package = "mrmarkup"))  %>%
   rename("BHName" = prod)
@@ -195,28 +199,29 @@ magExp <- inner_join(cons,
               values_from = Price) %>%
   mutate(foodD = foodD * 1e6, #convert to kcal from Mio. kcal
          fahExp = foodD * (1-AFHshr) * (noCaterPrice),
-         fafhExp = foodD * AFHshr * (RcaterPrice),
+         fafhExp = foodD * AFHshr * (caterPrice),
          farmAHexp = foodD *(1-AFHshr) * prodPrice,
          farmAFHexp = foodD *AFHshr * prodPrice,
          farmAHshr = farmAHexp/fahExp,
-         farmAFHshr = farmAFHexp/fafhExp)%>%
-  select(iso3c, year, k, foodD, gdp, prodPrice, caterPrice, noCaterPrice, fahExp, fafhExp, farmAHexp, farmAFHexp, farmAHshr, farmAFHshr)
+         farmAFHshr = farmAFHexp/fafhExp)%>% 
+    mutate(across(c(ends_with("Exp")),  ~ . / !!1e9 ),
+         totalFoodExp = fahExp + fafhExp)  %>%  # get total food exp in billions
+  select(iso3c, year, k, foodD, gdp, prodPrice, caterPrice, noCaterPrice, fahExp, fafhExp, totalFoodExp, farmAHexp, farmAFHexp, farmAHshr, farmAFHshr)
 
 
-magExpMeanK <- magExp %>%
+if(prodAggr) {
+magExp<- magExp %>%
   group_by(iso3c, year) %>%
   summarise(fahExp = sum(fahExp),
             fafhExp = sum(fafhExp),
             farmAHexp = sum(farmAHexp),
-            farmAFHexp = sum(farmAFHexp)) %>%
-  mutate(totExp = fahExp + fafhExp,
-         totfarmExp = farmAHexp + farmAFHexp,
+            farmAFHexp = sum(farmAFHexp),
+            totExp = sum(totalFoodExp)) %>%
+  mutate(totfarmExp = farmAHexp + farmAFHexp,
          farmShrAH =  farmAHexp / fahExp,  # get farm shares
          farmShrAFH = farmAFHexp/fafhExp,
-         farmShrTot = totfarmExp/totExp) %>%
-#  mutate(across(c(ends_with("Exp")),  ~ . / !!1e9 ),
-    mutate(across(c(ends_with("Exp")),  ~ . / !!1e9 ),
-         totalFoodExp = fahExp + fafhExp) # get total food exp in billions
+         farmShrTot = totfarmExp/totExp)
+}
 
 if(validYi){
 
@@ -282,22 +287,41 @@ ggplot(compyi3, aes(x = year, y = farmShr, colour = source)) +
 
 } 
 
-out <- magExpMeanK
+out <- magExp
 
 if(povmodel) {
 pop <- population(gdx, level = "iso")
-mag <- as.magpie(magExpMeanK[,c("iso3c", "year", "totalFoodExp")], tidy = TRUE)
-out <- mag/pop*1e3 # in billion dollars/million ppl to dollar/capita
+
+  if (type == "producer") {
+    exp <- "totfarmExp"
+  } else if (type == "consumer") {
+    exp <- "totalFoodExp"
+  }
+mag <- as.magpie(magExp[,c("iso3c", "year", exp)], tidy = TRUE)
 
 if(level == "reg") {
-  out <- toolAggregate(out, rel = mapping,  from = "iso3c", to = "i",
+mag <- toolAggregate(mag, rel = mapping,  from = "iso3c", to = "i",
                       dim = 1)
+pop <- toolAggregate(pop, rel = mapping,  from = "iso3c", to = "i",
+                      dim = 1)
+out <- mag/pop*1e3 # in billion dollars/million ppl to dollar/capita
+
 } else if (level == "regglo") {
-  out <- toolAggregate(out, rel = mapping,  from = "iso3c", to = "i",
+mag <- toolAggregate(mag, rel = mapping,  from = "iso3c", to = "i",
                       dim = 1)
- glo <- dimSums(out, dim = 1)
- getItems(glo, dim =1) <- "GLO"
- out <- mbind(glo, out)
+pop <- toolAggregate(pop, rel = mapping,  from = "iso3c", to = "i",
+                      dim = 1)
+ glom <- dimSums(mag, dim = 1)
+ glop <- dimSums(pop, dim = 1)
+ getItems(glom, dim = 1) <- "GLO"
+ getItems(glop, dim = 1) <- "GLO"
+ mag <- mbind(mag, glom)
+ pop <- mbind(pop, glop)
+ out <- mag/pop*1e3 # in billion dollars/million ppl to dollar/capita
+
+} else if (level == "iso"){
+out <- mag/pop*1e3 # in billion dollars/million ppl to dollar/capita
+
 }
 getNames(out) <- NULL
 }
