@@ -295,7 +295,7 @@ pop <- population(gdx, level = "iso")
   if (type == "producer") {
     exp <- "totfarmExp"
   } else if (type == "consumer") {
-    exp <- "totalFoodExp"
+    exp <- "totExp"
   }
 mag <- as.magpie(magExp[,c("iso3c", "year", exp)], tidy = TRUE)
 
