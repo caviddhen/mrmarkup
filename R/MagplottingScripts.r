@@ -1,5 +1,7 @@
 MagplottingScripts <- function(BAUgdx, POLgdx){
 
+setwd("/p/projects/landuse/users/davidch/ICPdata/plots")
+
 BAUgdx <-  "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/markupDefPov_2023-01-18_15.56.21/fulldata.gdx"
 POLgdx <-  "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/markupPolPov_2023-01-18_15.58.16/fulldata.gdx"
 
@@ -11,7 +13,7 @@ BAUm <- BAUm  %>% mutate(scen = "BAU")
 POL <- FoodExpMagpieMarkup(gdx = POLgdx, level = "iso", type = "consumer", prodAggr = FALSE, afterShock = TRUE,
                                 povmodel = FALSE, validYi = FALSE)
 
-POLm <- POLm  %>% mutate(scen = "POL")
+POLm <- POL  %>% mutate(scen = "POL")
 
 markups <- rbind(BAUm, POLm)  %>% 
           select(iso3c, year, scen, k, prodPrice, caterPrice, noCaterPrice) %>% 
@@ -248,6 +250,20 @@ ggplot(filter(markupsGloG,
                      values = c("#1E5B3E", "#348C62",  "#54D598")) +
   theme_bw(base_size = 18)
 
+### facet Scen and BAU GLO prices
+out <- ggplot(filter(markupsGloG, year %in% seq(2020, 2050, 5)),
+       aes(x = year, y = Price, color = `Price Type`))+
+  geom_line(lwd = 1.4)+
+  facet_wrap(~ scen, scales = "fixed", nrow = 1) +
+  ggtitle(paste("Global Average Food Prices \nBaseline and Climate Mitigation Scenarios")) +
+  ylab("Price $USD/kg")+
+  scale_color_manual(labels = c("Consumer Price FAFH", "Consumer Price FAH", "Prod Price" ),
+                     values = c("#1E5B3E", "#348C62",  "#54D598")) +
+  theme_bw(base_size = 24)
+
+ggsave(out, file = "./Fig3GloPrices.png", width = 20, height = 10)
+ggsave(out, file = "./Fig3GloPrices.pdf", width = 20, height = 10)
+
 
 ### make relative to BAU
 
@@ -290,23 +306,26 @@ ggplot(filter(markupsRatioGloProd, year %in% seq(2020,2050,5)),
                      guide = guide_legend(reverse = TRUE) )+
   theme_bw(base_size = 11)
 
-ggplot(filter(markupsRatioGloIG, year %in% seq(2020,2050,5)),
+b <- ggplot(filter(markupsRatioGloIG, year %in% seq(2020,2050,5)),
        aes(x = year, y = ratio, color = `Price Type`))+
   geom_line(lwd = 1.4)+
-  facet_wrap( ~ incomeG, scales = "free", nrow = 2) +
-  ggtitle(paste("POL:BAU Price Ratio")) +
+  facet_wrap( ~ incomeG, scales = "free", nrow = 1) +
+  ggtitle(paste("b) POL to BAU Price Ratio by Income Group")) +
   scale_color_manual(values = c(  "#1E5B3E","#348C62", "#54D598"))+
   theme_bw(base_size = 18)
 
-ggplot(filter(markupsRatioGlo3, year %in% seq(2020,2050,5)),
+a <- ggplot(filter(markupsRatioGlo3, year %in% seq(2020,2050,5)),
        aes(x = year, y = ratio, color = `Price Type`))+
   geom_line(lwd = 1.4)+
-  facet_wrap( ~ t, scales = "free", nrow = 2) +
-  ggtitle(paste("POL:BAU Price Ratio")) +
+  facet_wrap( ~ t, scales = "free", nrow = 1) +
+  ggtitle(paste("a) POL to BAU Price Ratio by Product ")) +
   scale_color_manual(values = c(  "#1E5B3E","#348C62", "#54D598"))+
   theme_bw(base_size = 18)
 
-
+library(gridExtra)
+out1 <- grid.arrange(a,b)
+ggsave(out1, file = "./Fig4POLBAURatio.pdf", height = 12, width = 10)
+ggsave(out1, file = "./Fig4POLBAURatio.png", height = 12, width = 10)
 
 ggplot(filter(markupsRatioGloG, year %in% seq(2020,2050,5)),
        aes(x = year, y = ratio, color = `Price Type`))+

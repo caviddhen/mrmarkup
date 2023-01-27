@@ -5,6 +5,7 @@
 #' @importFrom minpack.lm nlsLM
 #' @import Metrics
 #' @import ggplot2
+#' @import ggrepel
 #' @export
 #'
 #' @return dataframe of ICP expenditures
@@ -225,16 +226,17 @@ regPredsNoC <- mutate(regPredsNoCater,
                                                          "Meat",
                                                          "Milk products", "Eggs", "Processed")))
 
-ggplot(regPredsNoC, aes(y=pred, x= loggdp)) +
+a <- ggplot(regPredsNoC, aes(y=pred, x= loggdp)) +
   geom_point(aes(y=FAOmarkup_perT, x= loggdp, size = pop)) +
   geom_line(aes(size = 2), color = "darkgreen") +
-  ggtitle("Consumer Price Markups At-Home") +
+  ggtitle("a) Consumer Price Markups Food-At-Home") +
   geom_hline(yintercept=0, linetype="dashed") +
-  ylab("Markup (USD$05 / tWM)") + xlab("log10(GDPpc)")+
+  ylab("Markup (USD$17 / tWM)") + xlab("log10(GDPpc)")+
   facet_wrap(~ BHName, scales = "free", nrow = 2) +
- # ggrepel::geom_text_repel(aes(label = label), max.overlaps = 30) +
-  theme_bw(base_size = 18)# facet_wrap(~Bhagg, scales = "free")
+ ggrepel::geom_text_repel(aes(label = label), max.overlaps = 30) +
+  theme_bw(base_size = 22)# facet_wrap(~Bhagg, scales = "free")
 #label larger countries only
+
 
 regPredswC <- mutate(regPredswCater,
                      label = case_when(
@@ -242,15 +244,21 @@ regPredswC <- mutate(regPredswCater,
                      BHName = factor(BHName, levels = c("Bread and cereals", "Fruit", "Vegetables",
                                                         "Meat",
                                                         "Milk products", "Eggs", "Processed")))
- ggplot(regPredswC, aes(y=pred, x= loggdp)) +
+ b <- ggplot(regPredswC, aes(y=pred, x= loggdp)) +
   geom_point(aes(y=FAOmarkup_perT, x= loggdp, size = pop)) +
   geom_line(aes(size = 2), color = "darkgreen") +
-  ggtitle("Consumer Price Markups Away-from-Home") +
+  ggtitle("b) Consumer Price Markups Food-Away-from-Home") +
   geom_hline(yintercept=0, linetype="dashed") +
   ylab("Markup (USD$05 / tWM)") + xlab("log10(GDPpc)")+
   facet_wrap(~ BHName, scales = "free", nrow = 2) +
   ggrepel::geom_text_repel(aes(label = label), max.overlaps = 30) +
-  theme_bw(base_size = 18)# facet_wrap(~Bhagg, scales = "free")
+  theme_bw(base_size = 22)# facet_wrap(~Bhagg, scales = "free")
+
+#library(gridExtra)
+#t <- grid.arrange(a, b)
+#ggsave(t, height =  24, width = 16, file = "/p/projects/landuse/users/davidch/ICPdata/Fig1.pdf")
+#ggsave(t, height =  24, width = 16, file = "/p/projects/landuse/users/davidch/ICPdata/Fig1.png")
+
 #label larger countries only
 
 

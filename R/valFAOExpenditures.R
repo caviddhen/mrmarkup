@@ -172,6 +172,26 @@ magExpMeanKvalid <- magExpMeanK %>%
 
 magExpMeanKvalid[c(3:ncol(magExpMeanKvalid))] <- round(magExpMeanKvalid[c(3:ncol(magExpMeanKvalid))], digits = 3)
 
+
+
+# make map of farm share 
+pop <- calcOutput("Population", aggregate = FALSE)[,,"pop_SSP2"]
+pop <- time_interpolate(pop, interpolated_year = unique(magExpMeanK$year), integrate_interpolated_year = TRUE)
+
+mag <- as.magpie(magExpMeanK[,c("iso3c", "year", "farmShrTot")], tidy = TRUE)
+#library(rworldmap)
+#library(luplot)
+#plotmap(mag[,2019,])
+#t <- plotcountrymap(mag[,2019, ],  numCats = 5,
+#            catMethod = "pretty", colourPalette = c('#f1eef6','#bdc9e1','#74a9cf','#2b8cbe','#045a8d'),
+#            mapTitle = "Farm share of Food Dollar \n All Food Expenditures", 
+#            addLegend = FALSE)
+# do.call(addMapLegend, c(t, 
+#                       legendLabels = "all"))
+
+#save(mag, file = "/p/projects/landuse/users/davidch/ICPdata/plotme.Rds")
+
+
 #write.csv(magExpMeanKvalid, file="noweightReg_GDPconv.csv")
 
 yi4 <-  read_xlsx(system.file("extdata",mapping="YiSourceFig4.xlsx",
@@ -189,12 +209,12 @@ compyi4 <-  select(magExpMeanK, iso3c, year, farmShrAH) %>%
   pivot_longer(cols = c(farmShrAH, YifarmAHshr),
                names_to = "source", values_to = "farmAHShr")
 
-ggplot(compyi4, aes(x = year, y = farmAHShr, colour = source)) +
-  geom_line()+
+a <- ggplot(compyi4, aes(x = year, y = farmAHShr, colour = source)) +
+  geom_line(size = 1.5)+
   facet_wrap(~iso3c) +
   #  ylim(c(0.15, 0.45)) +
   theme_bw(base_size = 20) +
-  ggtitle("Farm Share of At Home Food Expenditures")
+  ggtitle("a) Farm Share of Food-At-Home Expenditures")
 
 yi3 <-  read_xlsx(system.file("extdata",mapping="YiSourceFig3.xlsx",
                               package = "mrmarkup"), skip = 4) %>%
@@ -219,11 +239,16 @@ compyi3 <- filter(magExpMeanK, iso3c == "USA") %>%
   pivot_longer(cols = c(farmShrTot, USDAfarmShrTot, YifarmShrTot),
                names_to = "source", values_to = "farmShr")
 
-ggplot(compyi3, aes(x = year, y = farmShr, colour = source)) +
-  geom_line() +
+b <- ggplot(compyi3, aes(x = year, y = farmShr, colour = source)) +
+  geom_line(size = 2) +
   #ylim(c(0.10, 0.30)) +
-  theme_bw(base_size = 20) +
-  ggtitle("Farm share of US food expenditures")
+  theme_bw(base_size = 22) +
+  ggtitle("b) Farm share of US food expenditures")
+
+#  library(gridExtra)
+#out <- grid.arrange(a, b)
+#ggsave(out, height =  24, width = 16, file = "/p/projects/landuse/users/davidch/ICPdata/Fig2.png")
+#ggsave(out, height =  24, width = 16, file = "/p/projects/landuse/users/davidch/ICPdata/Fig2.pdf")
 
 }
 
