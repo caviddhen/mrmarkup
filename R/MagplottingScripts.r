@@ -1,10 +1,12 @@
 MagplottingScripts <- function(BAUgdx, POLgdx){
 
-setwd("/p/projects/landuse/users/davidch/ICPdata/plots")
+setwd("/p/projects/magpie/users/davidch/ICPdata_cluster/plots")
+library(mrmarkup)
+library(brms)
+BAUgdx <-  "/p/projects/magpie/users/davidch/magpie_versions/develop/magpie/output/markupDefPov_2023-01-18_15.56.21/fulldata.gdx"
+POLgdx <-  "/p/projects/magpie/users/davidch/magpie_versions/develop/magpie/output/markupPolPov_2023-01-18_15.58.16/fulldata.gdx"
 
-BAUgdx <-  "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/markupDefPov_2023-01-18_15.56.21/fulldata.gdx"
-POLgdx <-  "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/markupPolPov_2023-01-18_15.58.16/fulldata.gdx"
-
+setConfig(forcecache=T)
 BAUm <- FoodExpMagpieMarkup(gdx = BAUgdx, level = "iso", type = "consumer", prodAggr = FALSE, afterShock = TRUE,
                                 povmodel = FALSE, validYi = FALSE)
 
@@ -33,27 +35,10 @@ markups$`Price Type` <- factor(markups$`Price Type`,
                                levels = c("prodPrice", "caterPrice", "noCaterPrice"))
 
 
-attr <- calcOutput("Attributes", aggregate = F)[,,"wm"] # t wm / t dm convert prices from dm to wm for markup
-nutr <- readGDX(BAUgdx, "f15_nutrition_attributes")[,,"kcal"]  #mio kcal / t DM convert prices from kcal to dm
-
-nutr <- as.data.frame(nutr, rev= 2)  %>% 
-  rename("year" = "t_all", "k" = kall, "kcal" = ".value") %>%
-  select(year,k, kcal)
-
-attr <- as.data.frame(attr, rev = 2)  %>% 
-      rename( "k" = "products", "wm" = ".value") %>%
-      select(k, wm)
-
-markups <- markups  %>% 
- inner_join(nutr)  %>% 
-  inner_join(attr)  %>%
-mutate(Price = Price / wm * kcal * 1e3)  #markups in $/kg WM
-
-
 # reg <- "EUR"
 #
 ### global price plot
-gdppc <- calcOutput("GDPpc", aggregate = FALSE)  %>% 
+gdppc <- calcOutput("GDPpc", aggregate = FALSE)[,,"gdppc_SSP2"]  %>% 
         as.data.frame(rev = 2)  %>% 
         rename("gdppc" = ".value")
 iG <- gdppc %>% filter(year == 2020) %>%

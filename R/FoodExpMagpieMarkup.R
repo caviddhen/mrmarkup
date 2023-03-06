@@ -11,17 +11,17 @@
 #' @importFrom magclass as.data.frame
 #' @importFrom magpiesets findset
 #' @importFrom gdx readGDX
+#' @import brms
 #' @export
 #'
 #' @return dataframe or magclass object of consumer food expenditures
 #' @author David M Chen
 
-FoodExpMagpieMarkup <- function(gdx, level = "reg", type = "consumer", prodAggr = TRUE, afterShock = FALSE,
+FoodExpMagpieMarkup <- function(gdx, level = "reg", type = "consumer", prodAggr = FALSE, afterShock = FALSE,
                                 povmodel = FALSE, validYi = FALSE) {
-#gdx <-  "/p/projects/landuse/users/davidch/magpie_versions/develop/magpie/output/markupDefPov_2023-01-18_15.56.21/fulldata.gdx"
+#gdx <-  "/p/projects/magpie/users/davidch/magpie_versions/develop/magpie/output/markupDefPov_2023-01-18_15.56.21/fulldata.gdx"
 
 # NOTE THIS ONE IS IN 2005 USDMER
-#now doing kcal and mag price per calorie so no need for wet matter
 
 kfo <- findset("kfo")
 kBH <- read.csv(system.file("extdata",mapping="mapMAgPIELEM.csv",
@@ -40,9 +40,7 @@ wm <- attr   %>% magclass::as.data.frame(rev = 2)  %>%
 nutr <- readGDX(gdx, "f15_nutrition_attributes")[,,"kcal"]  #mio kcal / t DM convert prices from kcal to dm
 
 prpr <- FoodDemandModuleConsumerPrices(gdx) # $/kcal
-#prpr <- collapseNames((prpr / attr[,,"wm"][,,getItems(prpr, dim = 3)]))
- # *
- #                      nutr[,getYears(prpr),getItems(prpr, dim = 3)] * 1e6))
+prpr <- collapseNames((prpr / attr[,,"wm"][,,getItems(prpr, dim = 3)] * nutr[,getYears(prpr),getItems(prpr, dim = 3)] * 1e6)) # prpr in $/twmM
 prpr <- time_interpolate(prpr, interpolated_year = c(2010:2017), integrate_interpolated_years = TRUE)
 prpr <- add_columns(prpr, addnm = "Vegetables", dim = 3.1, fill = NA)
 prpr[,,"Vegetables"] <- prpr[,,"others"]
@@ -136,14 +134,16 @@ prpr <- prpr %>%
   inner_join(kBH) 
 
 ##### get markup regression coefs #####
-coefs <- regressMarkups()
+#coefs <- regressMarkups()
+
+load("/p/projects/magpie/users/davidch/ICPdata_cluster/brmshiermodel.Rda")
 
 #remove alcohol
 prpr <- filter(prpr, k != "alcohol")
 
-magCoefs <- kBH  %>%
-  rename("prod" = "BHName")  %>% 
-    inner_join(coefs) 
+#magCoefs <- kBH  %>%
+#  rename("prod" = "BHName")  %>% 
+#    inner_join(coefs) 
 
 gdppc <- income(gdx, level = "iso")
 
@@ -160,23 +160,43 @@ attr <- as.data.frame(attr, rev = 2)  %>%
       rename( "k" = "products", "wm" = ".value") %>%
       select(k, wm)
 
+load("/p/projects/magpie/users/davidch/ICPdata_cluster/fittedDF.Rda")                              
+head(fits)
 
-markupPr <- inner_join(prpr, gdppc)  %>%
-  inner_join(magCoefs)  %>%
-  inner_join(nutr)  %>% 
-  inner_join(attr)  %>%
-  rename("prodPrice" = value)  %>% 
-mutate(markupCater = a*(b^log(gdppc, base = 10)),
-       markupCater = markupCater * wm / kcal / 1e6) %>% #get to tdm, to $/kcal from  miokcal/tdm 
-rename("value" = "markupCater")  %>% 
-  GDPuc::convertGDP(unit_in = "constant 2017 US$MER",
-                   unit_out = "constant 2005 US$MER",
+head(prpr)
+
+ prpr <- prpr  %>% 
+               GDPuc::convertGDP(unit_in = "constant 2005 US$MER",
+                   unit_out = "constant 2017 US$MER",
                    replace_NAs = "no_conversion")  %>% 
-       rename("markupCater" = value)  %>% 
-mutate(CaterPrice = prodPrice + markupCater)  %>% 
-select(!c(a, b, markupCater))  %>% 
-pivot_wider(names_from = cater, values_from = CaterPrice) %>% 
-  rename( "caterPrice" = cater, "noCaterPrice" = noCater)
+        rename("prodPrice" = value)  %>% 
+        inner_join(fits)   %>% 
+        select(!value)
+
+markupPr <- prpr  %>% 
+                   mutate(consPrice = prodPrice + Estimate)  %>% 
+   select(iso3c, year, k, prodPrice, BHName,  Cater, gdppc, prodPrice, consPrice)  %>% 
+             pivot_wider(names_from = Cater, values_from = consPrice)    %>% 
+  rename( "caterPrice" = Cater, "noCaterPrice" = noCater)  
+
+
+
+# markupPr <- inner_join(prpr, gdppc)  %>%
+#  inner_join(magCoefs)  %>%
+#  inner_join(nutr)  %>% 
+#  inner_join(attr)  %>%
+#  rename("prodPrice" = value)  %>% 
+#mutate(markupCater = a*(b^log(gdppc, base = 10)),
+#       markupCater = markupCater * wm / kcal / 1e6) %>% #get to tdm, to $/kcal from  miokcal/tdm 
+#rename("value" = "markupCater")  %>% 
+#  GDPuc::convertGDP(unit_in = "constant 2017 US$MER",
+#                   unit_out = "constant 2005 US$MER",
+#                   replace_NAs = "no_conversion")  %>% 
+#       rename("markupCater" = value)  %>% 
+#mutate(CaterPrice = prodPrice + markupCater)  %>% 
+#select(!c(a, b, markupCater))  %>% 
+#pivot_wider(names_from = cater, values_from = CaterPrice) %>% 
+#  rename( "caterPrice" = cater, "noCaterPrice" = noCater)
 
 markups <-  markupPr %>%
   pivot_longer(cols = c(prodPrice, noCaterPrice, caterPrice),
@@ -235,7 +255,7 @@ yi4 <- read_xlsx(system.file("extdata",mapping="YiSourceFig4.xlsx",
   ungroup()
 yi4$iso3c <- toolCountry2isocode(yi4$Country, mapping = c("Korea, Rep." = "KOR"))
 
-compyi4 <-  select(magExpMeanK, iso3c, year,farmShrAH) %>%
+compyi4 <-  select(magExp, iso3c, year,farmShrAH) %>%
   inner_join( select(yi4, iso3c, year, YifarmAHshr)) %>%
   pivot_longer(cols = c(farmShrAH, YifarmAHshr),
                names_to = "source", values_to = "farmAHShr")
@@ -267,7 +287,7 @@ yi3 <- yi3 %>%
 yi3[which(yi3$USDAfarmShrTot==0),"USDAfarmShrTot"] <- NA
 
 
-mkYi3 <- filter(magExpMeanK, iso3c == "USA") %>%
+mkYi3 <- filter(magExp, iso3c == "USA") %>%
   select(year, farmShrTot) %>%
   as.magpie() %>%
   time_interpolate(interpolated_year = c(1990:2020), integrate_interpolated_years = TRUE) %>%
